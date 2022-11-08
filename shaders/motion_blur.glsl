@@ -8,15 +8,15 @@ layout(location = 4) uniform sampler2D tInput;
 
 out vec4 fragColor;
 
-float random(vec3 scale, float seed, vec3 xyz){
-    return fract(sin(dot(xyz+seed, scale)) * 43758.5453 + seed);
+float random(vec3 xyz){
+    return fract(sin(dot(xyz, vec3(12.9898, 78.233, 151.7182))) * 43758.5453);
 }
 
 vec4 fragment(vec2 uv, vec2 fragCoord) {
     vec4 color = vec4(0.0);
     float total = 0.0;
     vec2 tDelta = delta * vec2(cos(angle), sin(angle));
-    float offset = random(vec3(12.9898, 78.233, 151.7182), 0.0, vec3(fragCoord, 1000.0));
+    float offset = random(vec3(fragCoord, 1000.0));
 
     for (float t = -30.0; t <= 30.0; t += 5){
         float percent = (t + offset - 0.5) / 30.0;
