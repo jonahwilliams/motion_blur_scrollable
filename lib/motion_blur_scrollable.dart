@@ -48,7 +48,7 @@ class _ScrollableBlurState extends State<ScrollableBlur> {
       setState(() {
         final deltaPixels = (pixels - lastPixels).abs();
         final velo = deltaPixels / (deltaT * 0.0001);
-        blurAmount = velo > 1.0 ? (deltaPixels) : 0.0;
+        blurAmount = velo > 1.0 ? deltaPixels : 0.0;
         blurAngle = notification.metrics.axis == Axis.horizontal ? pi : pi / 2;
       });
     }
