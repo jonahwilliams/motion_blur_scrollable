@@ -7,33 +7,41 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-typedef SamplerBuilder = void Function(ui.Image, Size, ui.Canvas);
+typedef SamplerBuilder = void Function(ui.Image, Size, Offset offset, ui.Canvas);
 
 class AnimatedSampler extends StatelessWidget {
-  const AnimatedSampler(this.builder, {required this.child, super.key});
+  const AnimatedSampler(this.builder, {
+    required this.child,
+    super.key,
+    this.enabled = true,
+  });
 
   final SamplerBuilder builder;
   final Widget child;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     return _ShaderSamplerImpl(
       builder,
-      child: RepaintBoundary(child: child),
+      enabled: enabled,
+      child: child,
     );
   }
 }
 
 class _ShaderSamplerImpl extends SingleChildRenderObjectWidget {
-  const _ShaderSamplerImpl(this.builder, {super.child});
+  const _ShaderSamplerImpl(this.builder, { super.child, required this.enabled });
 
   final SamplerBuilder builder;
+  final bool enabled;
 
   @override
   RenderObject createRenderObject(BuildContext context) {
     return _RenderShaderSamplerBuilderWidget(
       devicePixelRatio: MediaQuery.of(context).devicePixelRatio,
       builder: builder,
+      enabled: enabled,
     );
   }
 
@@ -41,7 +49,8 @@ class _ShaderSamplerImpl extends SingleChildRenderObjectWidget {
   void updateRenderObject(BuildContext context, covariant RenderObject renderObject) {
     (renderObject as _RenderShaderSamplerBuilderWidget)
       ..devicePixelRatio = MediaQuery.of(context).devicePixelRatio
-      ..builder = builder;
+      ..builder = builder
+      ..enabled = enabled;
   }
 }
 
@@ -53,8 +62,10 @@ class _RenderShaderSamplerBuilderWidget extends RenderProxyBox {
   _RenderShaderSamplerBuilderWidget({
     required double devicePixelRatio,
     required SamplerBuilder builder,
+    required bool enabled,
   }) : _devicePixelRatio = devicePixelRatio,
-       _builder = builder;
+       _builder = builder,
+       _enabled = enabled;
 
 
   /// The device pixel ratio used to create the child image.
@@ -85,6 +96,16 @@ class _RenderShaderSamplerBuilderWidget extends RenderProxyBox {
     markNeedsPaint();
   }
 
+  bool get enabled => _enabled;
+  bool _enabled;
+  set enabled(bool value) {
+    if (value == enabled) {
+      return;
+    }
+    _enabled = value;
+    markNeedsPaint();
+  }
+
   ui.Image? _childRaster;
 
   @override
@@ -104,18 +125,21 @@ class _RenderShaderSamplerBuilderWidget extends RenderProxyBox {
   // Paint [child] with this painting context, then convert to a raster and detach all
   // children from this layer.
   ui.Image? _paintAndDetachToImage() {
-    final OffsetLayer offsetLayer = OffsetLayer();
-    final PaintingContext context = PaintingContext(offsetLayer, Offset.zero & size);
+    final offsetLayer = OffsetLayer();
+    final context = PaintingContext(offsetLayer, Offset.zero & size);
     super.paint(context, Offset.zero);
     // This ignore is here because this method is protected by the `PaintingContext`. Adding a new
     // method that performs the work of `_paintAndDetachToImage` would avoid the need for this, but
     // that would conflict with our goals of minimizing painting context.
     // ignore: invalid_use_of_protected_member
     context.stopRecordingIfNeeded();
-    final ui.Image image = offsetLayer.toImageSync(Offset.zero & size, pixelRatio: devicePixelRatio);
+    final image = offsetLayer.toImageSync(Offset.zero & size, pixelRatio: devicePixelRatio);
     offsetLayer.dispose();
     return image;
   }
+
+  @override
+  bool get alwaysNeedsCompositing => true;
 
   @override
   void paint(PaintingContext context, Offset offset) {
@@ -124,8 +148,15 @@ class _RenderShaderSamplerBuilderWidget extends RenderProxyBox {
       _childRaster = null;
       return;
     }
+
+    if (!enabled) {
+      _childRaster?.dispose();
+      _childRaster = null;
+      return super.paint(context, offset);
+    }
     _childRaster?.dispose();
     _childRaster = _paintAndDetachToImage();
-    builder(_childRaster!, size, context.canvas);
+    builder(_childRaster!, size, offset, context.canvas);
+
   }
 }

@@ -76,7 +76,7 @@ class _GlowWidgetState extends State<MotionBlurDemoWidget> {
                   ..setFloat(1, pi / 2)
                   ..setFloat(2, barcelos.width.toDouble())
                   ..setFloat(3, barcelos.height.toDouble())
-                ..setSampler(0, ui.ImageShader(barcelos, TileMode.clamp, TileMode.clamp, _identity));
+                  ..setSampler(0, ui.ImageShader(barcelos, TileMode.clamp, TileMode.clamp, _identity));
                   return CustomPaint(
                     painter: ImagePainter(shader),
                   );

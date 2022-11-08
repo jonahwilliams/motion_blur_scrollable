@@ -57,12 +57,6 @@ class _ShaderBuilderState extends State<ShaderBuilder> {
       return;
     }
 
-    StackTrace? debugStack;
-    assert(() {
-      debugStack = StackTrace.current;
-      return true;
-    }());
-
     ui.FragmentProgram.fromAsset(assetKey).then((ui.FragmentProgram program) {
       if (!mounted) {
         return;
@@ -73,7 +67,7 @@ class _ShaderBuilderState extends State<ShaderBuilder> {
         _shaderCache[assetKey] = program;
       });
     }, onError: (Object error, StackTrace stackTrace) {
-      FlutterError.reportError(FlutterErrorDetails(exception: error, stack: debugStack ?? stackTrace));
+      FlutterError.reportError(FlutterErrorDetails(exception: error, stack: stackTrace));
     });
   }
 

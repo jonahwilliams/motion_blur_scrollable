@@ -3,11 +3,10 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
-import 'animated_sampler.dart';
-import 'shader_builder.dart';
+import 'package:scroll_experiments/animated_sampler.dart';
+import 'package:scroll_experiments/shader_builder.dart';
 
 final Float64List _identity = Matrix4.identity().storage;
 
@@ -29,7 +28,7 @@ class _ScrollableBlurState extends State<ScrollableBlur> {
   double lastPixels = 0;
 
   double blurAmount = 0;
-  double blueAngle = pi / 2;
+  double blurAngle = pi / 2;
 
   bool onScrollNotification(ScrollMetricsNotification notification) {
     if (notification.depth != 0) {
@@ -49,8 +48,8 @@ class _ScrollableBlurState extends State<ScrollableBlur> {
       setState(() {
         final deltaPixels = (pixels - lastPixels).abs();
         final velo = deltaPixels / (deltaT * 0.0001);
-        blurAmount = velo > 1.0 ? (deltaPixels / 800) : 0.0;
-        blueAngle = notification.metrics.axis == Axis.horizontal ? pi : pi / 2;
+        blurAmount = velo > 1.0 ? (deltaPixels) : 0.0;
+        blurAngle = notification.metrics.axis == Axis.horizontal ? pi : pi / 2;
       });
     }
 
@@ -58,7 +57,7 @@ class _ScrollableBlurState extends State<ScrollableBlur> {
     lastPixels = pixels;
 
     Timer(
-      const Duration(milliseconds: 60),
+      const Duration(milliseconds: 16),
       afterScrollCheck,
     );
 
@@ -72,7 +71,7 @@ class _ScrollableBlurState extends State<ScrollableBlur> {
     final ts = DateTime.now().millisecondsSinceEpoch;
     final deltaT = ts - lastTS;
 
-    if (deltaT >= 60) {
+    if (deltaT >= 16) {
       setState(() {
         blurAmount = 0.0;
       });
@@ -86,15 +85,27 @@ class _ScrollableBlurState extends State<ScrollableBlur> {
       child: ShaderBuilder(
         builder: (BuildContext context, ui.FragmentShader shader, Widget? child) {
           return AnimatedSampler(
-            (ui.Image image, Size size, Canvas canvas) {
-              shader
+            (ui.Image image, Size size, Offset offset, Canvas canvas) {
+            final imageShader = ui.ImageShader(
+              image,
+              TileMode.clamp,
+              TileMode.clamp,
+              _identity,
+            );
+            shader
               ..setFloat(0, blurAmount)
-              ..setFloat(1, pi / 2)
+              ..setFloat(1, blurAngle)
               ..setFloat(2, size.width)
               ..setFloat(3, size.height)
-              ..setSampler(0, ui.ImageShader(image, TileMode.clamp, TileMode.clamp, _identity));
-              canvas.drawImage(image, Offset.zero, Paint()..shader = shader);
+              ..setSampler(0, imageShader);
+              canvas
+                ..translate(offset.dx, offset.dy)
+                ..drawRect(
+                Offset.zero & size,
+                Paint()..shader = shader,
+              );
             },
+            enabled: blurAmount > 50,
             child: widget.child,
           );
         },

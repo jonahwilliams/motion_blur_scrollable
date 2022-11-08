@@ -64,11 +64,9 @@ class RandomOsloPhoto extends StatefulWidget {
   State<RandomOsloPhoto> createState() => _RandomOsloPhotoState();
 }
 
-class _RandomOsloPhotoState extends State<RandomOsloPhoto>
-    with AutomaticKeepAliveClientMixin {
+class _RandomOsloPhotoState extends State<RandomOsloPhoto> {
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     return AspectRatio(
       aspectRatio: 4 / 3,
       child: Image.network(
@@ -76,9 +74,6 @@ class _RandomOsloPhotoState extends State<RandomOsloPhoto>
       ),
     );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }
 
 class Title extends StatelessWidget {
@@ -91,7 +86,7 @@ class Title extends StatelessWidget {
     final theme = Theme.of(context).textTheme;
 
     return DefaultTextStyle.merge(
-      style: theme.headline1!.merge(const TextStyle(
+      style: theme.displayLarge!.merge(const TextStyle(
         fontWeight: FontWeight.w900,
         color: Color(0xFF000000),
         letterSpacing: -12,
