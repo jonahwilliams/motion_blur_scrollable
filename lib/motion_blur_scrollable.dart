@@ -1,10 +1,15 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
-import 'package:scroll_experiments/umbragen/motion_blur.dart';
+
+import 'animated_sampler.dart';
+import 'shader_builder.dart';
+
+final Float64List _identity = Matrix4.identity().storage;
 
 class ScrollableBlur extends StatefulWidget {
   const ScrollableBlur({
@@ -19,34 +24,12 @@ class ScrollableBlur extends StatefulWidget {
 }
 
 class _ScrollableBlurState extends State<ScrollableBlur> {
-  final _boundaryKey = GlobalKey();
-
   ui.Image? image;
   int lastTS = DateTime.now().millisecondsSinceEpoch;
   double lastPixels = 0;
 
   double blurAmount = 0;
   double blueAngle = pi / 2;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-  }
-
-  bool captureLock = false;
-
-  Future<void> captureImage() async {
-    if (captureLock) return;
-    captureLock = true;
-    final pixelRatio = MediaQuery.of(context).devicePixelRatio;
-    final boundary = _boundaryKey.currentContext!.findRenderObject()!
-        as RenderRepaintBoundary;
-    final im = await boundary.toImage(pixelRatio: pixelRatio);
-    setState(() {
-      captureLock = false;
-      image = im;
-    });
-  }
 
   bool onScrollNotification(ScrollMetricsNotification notification) {
     if (notification.depth != 0) {
@@ -98,31 +81,25 @@ class _ScrollableBlurState extends State<ScrollableBlur> {
 
   @override
   Widget build(BuildContext context) {
-    if (blurAmount != 0) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => captureImage());
-    }
-
-    final image = this.image;
-
-    return Stack(
-      fit: StackFit.passthrough,
-      children: [
-        NotificationListener<ScrollMetricsNotification>(
-          onNotification: onScrollNotification,
-          child: RepaintBoundary(
-            key: _boundaryKey,
+    return NotificationListener<ScrollMetricsNotification>(
+      onNotification: onScrollNotification,
+      child: ShaderBuilder(
+        builder: (BuildContext context, ui.FragmentShader shader, Widget? child) {
+          return AnimatedSampler(
+            (ui.Image image, Size size, Canvas canvas) {
+              shader
+              ..setFloat(0, blurAmount)
+              ..setFloat(1, pi / 2)
+              ..setFloat(2, size.width)
+              ..setFloat(3, size.height)
+              ..setSampler(0, ui.ImageShader(image, TileMode.clamp, TileMode.clamp, _identity));
+              canvas.drawImage(image, Offset.zero, Paint()..shader = shader);
+            },
             child: widget.child,
-          ),
-        ),
-        if (image != null && blurAmount > 0.0)
-          IgnorePointer(
-            child: MotionBlur(
-              tInput: image,
-              delta: blurAmount,
-              angle: pi / 2,
-            ),
-          )
-      ],
+          );
+        },
+        assetKey: 'shaders/motion_blur.glsl',
+      ),
     );
   }
 }

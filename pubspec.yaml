@@ -15,7 +15,6 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   intl: ^0.17.0
-  umbra_flutter: ^0.1.0-dev.4
 
 dev_dependencies:
   bloc_test: ^9.1.0
@@ -27,5 +26,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+  shaders:
+    - shaders/motion_blur.glsl
   assets:
     - assets/

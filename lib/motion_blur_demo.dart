@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:scroll_experiments/umbragen/motion_blur.dart';
+import 'package:scroll_experiments/shader_builder.dart';
+
+final Float64List _identity = Matrix4.identity().storage;
+
 
 class MotionBlurDemoWidget extends StatefulWidget {
   const MotionBlurDemoWidget({super.key});
@@ -14,6 +17,7 @@ class MotionBlurDemoWidget extends StatefulWidget {
 
 class _GlowWidgetState extends State<MotionBlurDemoWidget> {
   ui.Image? barcelos;
+
 
   @override
   void didChangeDependencies() {
@@ -28,19 +32,21 @@ class _GlowWidgetState extends State<MotionBlurDemoWidget> {
   }
 
   Future<void> getBarcelos() async {
-    final imageData = await rootBundle.load('assets/image.jpg');
-    final image = await decodeImageFromList(imageData.buffer.asUint8List());
-    setState(() {
-      barcelos = image;
-    });
+    const assetImage = AssetImage('assets/image.jpg');
+    final key = await assetImage.obtainKey(ImageConfiguration.empty);
+    final completer = assetImage
+      .loadBuffer(key, PaintingBinding.instance.instantiateImageCodecFromBuffer);
+    completer.addListener(ImageStreamListener((image, synchronousCall) {
+      setState(() {
+        barcelos = image.image;
+      });
+    }));
   }
 
   double delta = 0;
 
-
   void handleVerticalDragUpdate(DragUpdateDetails details, double height) {
-    final exp =  (details.localPosition.dy / height);
-
+    final exp = details.localPosition.dy / height;
     final exx = 10 ^ (1000 * exp).ceil();
 
     setState(() {
@@ -63,15 +69,40 @@ class _GlowWidgetState extends State<MotionBlurDemoWidget> {
           builder: (context, constraints) {
             return GestureDetector(
               onVerticalDragUpdate: (details) => handleVerticalDragUpdate(details, constraints.maxHeight),
-              child: MotionBlur(
-                tInput: barcelos,
-                delta: delta,
-                angle: pi / 1,
+              child: ShaderBuilder(
+                builder: (BuildContext context, ui.FragmentShader shader, Widget? child) {
+                shader
+                  ..setFloat(0, delta)
+                  ..setFloat(1, pi / 2)
+                  ..setFloat(2, barcelos.width.toDouble())
+                  ..setFloat(3, barcelos.height.toDouble())
+                ..setSampler(0, ui.ImageShader(barcelos, TileMode.clamp, TileMode.clamp, _identity));
+                  return CustomPaint(
+                    painter: ImagePainter(shader),
+                  );
+                },
+                assetKey: 'shaders/motion_blur.glsl',
               ),
             );
           }
         ),
       ),
     );
+  }
+}
+
+class ImagePainter extends CustomPainter {
+  ImagePainter(this.shader);
+
+  final ui.FragmentShader shader;
+
+  @override
+  void paint(ui.Canvas canvas, ui.Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }

@@ -1,6 +1,11 @@
-uniform sampler2D tInput;
-uniform float delta;
-uniform float angle;
+layout(location = 0) uniform float delta;
+layout(location = 1) uniform float angle;
+layout(location = 2) uniform vec2 size;
+layout(location = 3) uniform sampler2D tInput;
+
+const vec3 SCALE = vec3(12.9898, 78.233, 151.7182);
+
+out vec4 fragColor;
 
 float random(vec3 scale, float seed, vec3 xyz){
     return fract(sin(dot(xyz+seed, scale))*43758.5453+seed);
@@ -25,4 +30,10 @@ vec4 fragment(vec2 uv, vec2 fragCoord) {
     vec4 fragcolor=  color / total;
     fragcolor.rgb = fragcolor.rgb/ fragcolor.a+0.01;
     return fragcolor;
+}
+
+void main() {
+  vec2 pos = gl_FragCoord.xy;
+  vec2 uv = pos / size;
+  fragColor = fragment(uv, pos);
 }
