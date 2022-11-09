@@ -3,7 +3,7 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/widgets.dart';
-import 'package:scroll_experiments/shader_builder.dart';
+import 'package:flutter_shaders/flutter_shaders.dart';
 
 final Float64List _identity = Matrix4.identity().storage;
 
@@ -70,7 +70,7 @@ class _GlowWidgetState extends State<MotionBlurDemoWidget> {
             return GestureDetector(
               onVerticalDragUpdate: (details) => handleVerticalDragUpdate(details, constraints.maxHeight),
               child: ShaderBuilder(
-                builder: (BuildContext context, ui.FragmentShader shader, Widget? child) {
+                (BuildContext context, ui.FragmentShader shader, Widget? child) {
                 shader
                   ..setFloat(0, delta)
                   ..setFloat(1, pi / 2)

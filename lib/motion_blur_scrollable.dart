@@ -5,8 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
 
-import 'package:scroll_experiments/animated_sampler.dart';
-import 'package:scroll_experiments/shader_builder.dart';
+import 'package:flutter_shaders/flutter_shaders.dart';
 
 final Float64List _identity = Matrix4.identity().storage;
 
@@ -83,7 +82,7 @@ class _ScrollableBlurState extends State<ScrollableBlur> {
     return NotificationListener<ScrollMetricsNotification>(
       onNotification: onScrollNotification,
       child: ShaderBuilder(
-        builder: (BuildContext context, ui.FragmentShader shader, Widget? child) {
+        (BuildContext context, ui.FragmentShader shader, Widget? child) {
           return AnimatedSampler(
             (ui.Image image, Size size, Offset offset, Canvas canvas) {
             final imageShader = ui.ImageShader(
