@@ -1,10 +1,10 @@
 precision mediump float;
 
-layout(location = 0) uniform float delta;
-layout(location = 1) uniform float angle;
-layout(location = 2) uniform float width;
-layout(location = 3) uniform float height;
-layout(location = 4) uniform sampler2D tInput;
+uniform float delta;
+uniform float angle;
+uniform float width;
+uniform float height;
+uniform sampler2D tInput;
 
 out vec4 fragColor;
 

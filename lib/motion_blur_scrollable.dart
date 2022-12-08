@@ -85,18 +85,12 @@ class _ScrollableBlurState extends State<ScrollableBlur> {
         (BuildContext context, ui.FragmentShader shader, Widget? child) {
           return AnimatedSampler(
             (ui.Image image, Size size, Offset offset, Canvas canvas) {
-            final imageShader = ui.ImageShader(
-              image,
-              TileMode.clamp,
-              TileMode.clamp,
-              _identity,
-            );
             shader
               ..setFloat(0, blurAmount)
               ..setFloat(1, blurAngle)
               ..setFloat(2, size.width)
               ..setFloat(3, size.height)
-              ..setSampler(0, imageShader);
+              ..setImageSampler(0, image);
               canvas
                 ..translate(offset.dx, offset.dy)
                 ..drawRect(
